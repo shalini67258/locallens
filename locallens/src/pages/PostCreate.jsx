@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPost } from '../services/postService';
 
 function PostCreate() {
   const navigate = useNavigate();
@@ -74,12 +75,10 @@ function PostCreate() {
     ],
   };
 
-  // SEARCH REAL PLACES using OpenStreetMap
-  // Free! No API key! Works for all India!
+  // Search real places using OpenStreetMap - Free!
   const handleLocationSearch = async (value) => {
     setLocationSearch(value);
     setArea(value);
-
     if (value.length > 2) {
       setLoadingLocations(true);
       try {
@@ -97,41 +96,29 @@ function PostCreate() {
     }
   };
 
-  const handleSubmit = () => {
+  // SUBMIT - saves to REAL backend database!
+  const handleSubmit = async () => {
     if (!area || !content || !category) {
       alert('Please fill area, category and update!');
       return;
     }
 
+    // Only send what backend needs
+    // Backend auto assigns emoji, color, createdAt!
     const newPost = {
-      id: Date.now(),
       area: area,
       category: category,
       content: content,
-      time: timePosted + ' • ' + datePosted,
-      upvotes: 0,
-      color: category === 'Emergency' || category === 'Flood' ? 'red'
-           : category === 'Traffic' || category === 'Road Issue' ? 'yellow'
-           : category === 'Event' ? 'green'
-           : 'blue',
-      emoji: category === 'Emergency' ? '🚨'
-           : category === 'Traffic' ? '🚧'
-           : category === 'Water' ? '💧'
-           : category === 'Event' ? '🎉'
-           : category === 'Power Cut' ? '⚡'
-           : category === 'Road Issue' ? '🏗️'
-           : category === 'Flood' ? '🌊'
-           : 'ℹ️'
     };
 
-    const existingPosts = JSON.parse(
-      localStorage.getItem('locallens_posts') || '[]'
-    );
-    const updatedPosts = [newPost, ...existingPosts];
-    localStorage.setItem('locallens_posts', JSON.stringify(updatedPosts));
-
-    setSubmitted(true);
-    setTimeout(() => navigate('/feed'), 2000);
+    try {
+      // Calls POST /api/posts in Spring Boot
+      await createPost(newPost);
+      setSubmitted(true);
+      setTimeout(() => navigate('/feed'), 2000);
+    } catch (error) {
+      alert('Error! Make sure backend is running on port 8080!');
+    }
   };
 
   if (submitted) {
@@ -181,13 +168,11 @@ function PostCreate() {
             <h2 className="text-3xl font-black mb-2">Share What's Happening</h2>
             <p className="text-gray-400 mb-8">Help your neighbors stay informed! 🌍</p>
 
-            {/* AREA WITH REAL LOCATION SEARCH */}
+            {/* AREA */}
             <div className="mb-6">
               <label className="text-sm text-gray-400 font-semibold mb-2 block">
                 📍 Your Area
               </label>
-
-              {/* Quick area buttons */}
               <div className="flex flex-wrap gap-2 mb-3">
                 {['Kukatpally', 'Miyapur', 'Hitech City', 'Dilsukhnagar', 'Madhapur', 'Gachibowli'].map(a => (
                   <button
@@ -208,7 +193,6 @@ function PostCreate() {
                 ))}
               </div>
 
-              {/* Location search with real suggestions */}
               <div className="relative">
                 <input
                   type="text"
@@ -217,22 +201,17 @@ function PostCreate() {
                   placeholder="🔍 Search any city or area in India..."
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition"
                 />
-
-                {/* Loading */}
                 {loadingLocations && (
                   <div className="absolute right-4 top-3 text-cyan-400 text-sm animate-pulse">
                     Searching...
                   </div>
                 )}
-
-                {/* Suggestions dropdown */}
                 {locationSuggestions.length > 0 && (
                   <div className="absolute z-50 w-full mt-2 bg-[#0f172a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
                     {locationSuggestions.map((place, index) => (
                       <button
                         key={index}
                         onClick={() => {
-                          // Get short readable name
                           const shortName = place.display_name.split(',')[0];
                           setArea(shortName);
                           setLocationSearch(shortName);
@@ -251,12 +230,8 @@ function PostCreate() {
                   </div>
                 )}
               </div>
-
-              {/* Show selected area */}
               {area && (
-                <p className="text-cyan-400 text-xs mt-2">
-                  ✅ Selected: {area}
-                </p>
+                <p className="text-cyan-400 text-xs mt-2">✅ Selected: {area}</p>
               )}
             </div>
 

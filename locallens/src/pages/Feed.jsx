@@ -1,14 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getAllPosts, upvotePost } from '../services/postService';
 import { useNavigate } from 'react-router-dom';
 
 function Feed() {
   const navigate = useNavigate();
 
-  const [posts, setPosts] = useState(() => {
-    const saved = localStorage.getItem('locallens_posts');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedArea, setSelectedArea] = useState("All");
   const [search, setSearch] = useState("");
   const [showLanguages, setShowLanguages] = useState(false);
@@ -39,6 +37,23 @@ function Feed() {
     { code: 'ks', name: 'Kashmiri', native: 'कॉशुर' },
     { code: 'doi', name: 'Dogri', native: 'डोगरी' },
   ];
+
+  // Runs when page loads - fetches real posts from backend!
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      const data = await getAllPosts();
+      setPosts(data);
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredLanguages = languages.filter(lang =>
     lang.name.toLowerCase().includes(langSearch.toLowerCase()) ||
@@ -79,13 +94,19 @@ function Feed() {
     return areaMatch && searchMatch;
   });
 
-  const handleUpvote = (id) => {
-    const updatedPosts = posts.map(post =>
-      post.id === id ? { ...post, upvotes: post.upvotes + 1 } : post
-    );
-    setPosts(updatedPosts);
-    localStorage.setItem('locallens_posts', JSON.stringify(updatedPosts));
+  const handleUpvote = async (id) => {
+    try {
+      const updatedPost = await upvotePost(id);
+      setPosts(posts.map(post =>
+        post.id === id ? updatedPost : post
+      ));
+    } catch (error) {
+      console.error('Error upvoting:', error);
+    }
   };
+
+  // Get unique areas from real posts for dynamic filter!
+  const uniqueAreas = ["All", ...new Set(posts.map(post => post.area))];
 
   return (
     <div className="min-h-screen bg-[#030712] text-white">
@@ -179,9 +200,9 @@ function Feed() {
           />
         </div>
 
-        {/* AREA FILTERS */}
+        {/* DYNAMIC AREA FILTERS - from real posts! */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
-          {["All", "Kukatpally", "Miyapur", "Hitech City", "Dilsukhnagar", "Madhapur", "Gachibowli"].map(area => (
+          {uniqueAreas.map(area => (
             <button
               key={area}
               onClick={() => setSelectedArea(area)}
@@ -197,14 +218,22 @@ function Feed() {
         </div>
 
         <p className="text-gray-400 text-sm mb-6">
-          {filteredPosts.length === 0
-            ? "No updates found"
+          {loading ? "Loading..." :
+            filteredPosts.length === 0 ? "No updates found"
             : `Showing ${filteredPosts.length} update${filteredPosts.length > 1 ? 's' : ''}`
           }
         </p>
 
+        {/* LOADING STATE */}
+        {loading && (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4 animate-spin">⚡</div>
+            <p className="text-gray-400">Loading updates...</p>
+          </div>
+        )}
+
         {/* EMPTY STATE */}
-        {posts.length === 0 && (
+        {!loading && posts.length === 0 && (
           <div className="text-center py-32">
             <div className="text-7xl mb-6">📭</div>
             <h3 className="text-2xl font-black text-gray-300 mb-2">No updates yet!</h3>
@@ -219,7 +248,7 @@ function Feed() {
         )}
 
         {/* NO RESULTS */}
-        {posts.length > 0 && filteredPosts.length === 0 && (
+        {!loading && posts.length > 0 && filteredPosts.length === 0 && (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-bold text-gray-400">No updates found</h3>
@@ -232,17 +261,22 @@ function Feed() {
           </div>
         )}
 
-        {/* POST CARDS */}
-        {filteredPosts.map(post => (
+        {/* REAL POST CARDS FROM DATABASE */}
+        {!loading && filteredPosts.map(post => (
           <div
             key={post.id}
-            className={`bg-gradient-to-r ${colorMap[post.color]} border rounded-3xl p-5 mb-4 hover:scale-[1.01] transition`}
+            className={`bg-gradient-to-r ${colorMap[post.color] || colorMap.blue} border rounded-3xl p-5 mb-4 hover:scale-[1.01] transition`}
           >
             <div className="flex justify-between items-center">
-              <span className={`${badgeColorMap[post.color]} px-3 py-1 rounded-full text-xs font-semibold`}>
+              <span className={`${badgeColorMap[post.color] || badgeColorMap.blue} px-3 py-1 rounded-full text-xs font-semibold`}>
                 {post.emoji} {post.category}
               </span>
-              <span className="text-gray-400 text-sm">{post.time}</span>
+              <span className="text-gray-400 text-sm">
+                {post.createdAt ? new Date(post.createdAt).toLocaleTimeString('en-IN', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : ''}
+              </span>
             </div>
             <p className="text-white font-semibold text-lg mt-4">{post.content}</p>
             <div className="flex items-center mt-4">
