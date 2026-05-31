@@ -1,7 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getUser, isLoggedIn, logout } from '../services/authService';
 
 function Home() {
+  const [user, setUser] = useState(null);
+const [stats, setStats] = useState({
+  totalPosts: 0,
+  emergencies: 0,
+  areasActive: 0
+});
+
+// Check if user is logged in
+useEffect(() => {
+  if (isLoggedIn()) {
+    setUser(getUser());
+  }
+  fetchStats();
+}, []);
+
+// Fetch real stats from backend
+const fetchStats = async () => {
+  try {
+    const res = await fetch('http://localhost:8080/api/posts/stats');
+    const data = await res.json();
+    setStats(data);
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+  }
+};
+
+// Logout function
+const handleLogout = () => {
+  logout();
+  setUser(null);
+};
   const navigate = useNavigate();
 
   const [showLanguages, setShowLanguages] = useState(false);
@@ -161,73 +193,108 @@ const handleListen = async () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="hidden md:block bg-white/10 border border-white/10 px-4 py-2 rounded-full text-sm hover:bg-white/20 transition">
-              🔔 Alerts
-            </button>
-            <button
-              onClick={() => setShowLanguages(true)}
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 rounded-full text-sm font-bold shadow-lg shadow-cyan-500/20 hover:scale-105 transition"
-            >
-              🌐 {selectedLang.native}
-            </button>
-          </div>
+  {/* Show username if logged in */}
+  {user ? (
+    <div className="flex items-center gap-3">
+      <span className="hidden md:block text-cyan-400 font-semibold text-sm">
+        👋 Hi, {user.name}!
+      </span>
+      <button
+        onClick={handleLogout}
+        className="bg-red-500/20 border border-red-500/30 text-red-400 px-4 py-2 rounded-full text-sm font-bold hover:bg-red-500/30 transition"
+      >
+        Logout
+      </button>
+    </div>
+  ) : (
+    <button
+      onClick={() => navigate('/login')}
+      className="hidden md:block bg-white/10 border border-white/10 px-4 py-2 rounded-full text-sm hover:bg-white/20 transition"
+    >
+      🔐 Login
+    </button>
+  )}
+  <button
+    onClick={() => setShowLanguages(true)}
+    className="bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 rounded-full text-sm font-bold shadow-lg shadow-cyan-500/20 hover:scale-105 transition"
+  >
+    🌐 {selectedLang.native}
+  </button>
+</div>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="w-full min-h-screen flex items-center justify-center px-6 lg:px-16 py-20">
-        <div className="max-w-4xl w-full text-center">
+    {/* HERO */}
+<section className="w-full min-h-screen flex items-center justify-center px-6 lg:px-16 py-20">
+  <div className="max-w-4xl w-full text-center">
 
-          <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-400/20 px-5 py-2 rounded-full text-cyan-300 text-sm font-semibold mb-8">
-            <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
-            LIVE COMMUNITY UPDATES — YOUR CITY
-          </div>
+    <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-400/20 px-5 py-2 rounded-full text-cyan-300 text-sm font-semibold mb-8">
+      <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
+      LIVE COMMUNITY UPDATES — YOUR CITY
+    </div>
 
-          <h1 className="text-5xl md:text-7xl font-black leading-tight mb-6">
-            Know What's Happening
-            <span className="block bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 text-transparent bg-clip-text">
-              In Your Area
-            </span>
-          </h1>
+    <h1 className="text-5xl md:text-7xl font-black leading-tight mb-6">
+      Know What's Happening
+      <span className="block bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 text-transparent bg-clip-text">
+        In Your Area
+      </span>
+    </h1>
 
-          <p className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-10">
-            Real-time hyperlocal alerts for power cuts, traffic,
-            water issues, emergencies and local events —
-            for every city and town across India. 🇮🇳
-          </p>
+    <p className="text-gray-300 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-10">
+      Real-time hyperlocal alerts for power cuts, water issues, traffic,
+      water issues, emergencies and local events —
+      for every city and town across India. 🇮🇳
+    </p>
 
-          <div className="flex flex-wrap gap-4 justify-center mb-16">
-            <button
-              onClick={() => navigate('/feed')}
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl shadow-cyan-500/30 hover:scale-105 transition"
-            >
-              🚀 Explore Live Feed
-            </button>
-            <button
-              onClick={() => navigate('/post')}
-              className="bg-white/10 border border-white/20 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition"
-            >
-              📝 Post an Update
-            </button>
-          </div>
+    <div className="flex flex-wrap gap-4 justify-center mb-16">
+      <button
+        onClick={() => navigate('/feed')}
+        className="bg-gradient-to-r from-cyan-500 to-blue-600 px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl shadow-cyan-500/30 hover:scale-105 transition"
+      >
+        🚀 Explore Live Feed
+      </button>
 
-          {/* STATS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { value: '1.2K+', label: 'Live Updates', color: 'text-cyan-400' },
-              { value: '12', label: 'Emergencies', color: 'text-red-400' },
-              { value: '22', label: 'Areas Active', color: 'text-green-400' },
-              { value: '98%', label: 'AI Verified', color: 'text-purple-400' },
-            ].map((stat, i) => (
-              <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl hover:bg-white/10 transition">
-                <h2 className={`text-3xl font-black ${stat.color}`}>{stat.value}</h2>
-                <p className="text-gray-400 text-sm mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
+      <button
+        onClick={() => navigate('/post')}
+        className="bg-white/10 border border-white/20 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition"
+      >
+        📝 Post an Update
+      </button>
+    </div>
 
-        </div>
-      </section>
+    {/* STATS */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl hover:bg-white/10 transition">
+        <h2 className="text-3xl font-black text-cyan-400">
+          {stats.totalPosts || 0}
+        </h2>
+        <p className="text-gray-400 text-sm mt-1">Live Updates</p>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl hover:bg-white/10 transition">
+        <h2 className="text-3xl font-black text-red-400">
+          {stats.emergencies || 0}
+        </h2>
+        <p className="text-gray-400 text-sm mt-1">Emergencies</p>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl hover:bg-white/10 transition">
+        <h2 className="text-3xl font-black text-green-400">
+          {stats.areasActive || 0}
+        </h2>
+        <p className="text-gray-400 text-sm mt-1">Areas Active</p>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl hover:bg-white/10 transition">
+        <h2 className="text-3xl font-black text-purple-400">
+          {stats.totalPosts > 0 ? '98%' : '0%'}
+        </h2>
+        <p className="text-gray-400 text-sm mt-1">AI Verified</p>
+      </div>
+    </div>
+
+  </div>
+</section>
 
       {/* FEATURES */}
       <section className="w-full px-6 lg:px-16 py-20">

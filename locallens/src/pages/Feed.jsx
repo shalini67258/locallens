@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getAllPosts, upvotePost } from '../services/postService';
 import { useNavigate } from 'react-router-dom';
+import { getAllPosts, upvotePost, deletePost } from '../services/postService';
+import { getUser, isLoggedIn } from '../services/authService';
 
 function Feed() {
   const navigate = useNavigate();
@@ -93,6 +94,14 @@ function Feed() {
       post.category.toLowerCase().includes(search.toLowerCase());
     return areaMatch && searchMatch;
   });
+  const handleDelete = async (id) => {
+  try {
+    await deletePost(id);
+    setPosts(posts.filter(post => post.id !== id));
+  } catch (error) {
+    console.error('Error deleting:', error);
+  }
+};
 
   const handleUpvote = async (id) => {
     try {
@@ -262,34 +271,66 @@ function Feed() {
         )}
 
         {/* REAL POST CARDS FROM DATABASE */}
-        {!loading && filteredPosts.map(post => (
-          <div
-            key={post.id}
-            className={`bg-gradient-to-r ${colorMap[post.color] || colorMap.blue} border rounded-3xl p-5 mb-4 hover:scale-[1.01] transition`}
-          >
-            <div className="flex justify-between items-center">
-              <span className={`${badgeColorMap[post.color] || badgeColorMap.blue} px-3 py-1 rounded-full text-xs font-semibold`}>
-                {post.emoji} {post.category}
-              </span>
-              <span className="text-gray-400 text-sm">
-                {post.createdAt ? new Date(post.createdAt).toLocaleTimeString('en-IN', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }) : ''}
-              </span>
-            </div>
-            <p className="text-white font-semibold text-lg mt-4">{post.content}</p>
-            <div className="flex items-center mt-4">
-              <span className="text-cyan-300 text-sm">📍 {post.area}</span>
-              <button
-                onClick={() => handleUpvote(post.id)}
-                className="ml-auto bg-white/10 px-4 py-2 rounded-full hover:bg-white/20 transition text-sm"
-              >
-                👍 {post.upvotes}
-              </button>
-            </div>
-          </div>
-        ))}
+        
+{/* REAL POST CARDS FROM DATABASE */}
+
+{!loading && filteredPosts.map(post => (
+  <div
+    key={post.id}
+    className={`bg-gradient-to-r ${colorMap[post.color] || colorMap.blue} border rounded-3xl p-5 mb-4 hover:scale-[1.01] transition`}
+  >
+    <div className="flex justify-between items-center">
+      <span className={`${badgeColorMap[post.color] || badgeColorMap.blue} px-3 py-1 rounded-full text-xs font-semibold`}>
+        {post.emoji} {post.category}
+      </span>
+      <span className="text-gray-400 text-sm">
+        {post.createdAt
+          ? new Date(post.createdAt).toLocaleTimeString('en-IN', {
+              hour: '2-digit',
+              minute: '2-digit'
+            })
+          : ''}
+      </span>
+    </div>
+
+    <p className="text-white font-semibold text-lg mt-4">
+      {post.content}
+    </p>
+
+    <div className="flex items-center mt-4">
+      <div>
+        <span className="text-cyan-300 text-sm">
+          📍 {post.area}
+        </span>
+
+        {post.postedBy && (
+          <p className="text-gray-500 text-xs mt-1">
+            👤 {post.postedBy}
+          </p>
+        )}
+      </div>
+
+      <div className="ml-auto flex items-center gap-2">
+        {isLoggedIn() &&
+          getUser()?.email === post.postedBy && (
+            <button
+              onClick={() => handleDelete(post.id)}
+              className="bg-red-500/20 text-red-400 px-3 py-2 rounded-full hover:bg-red-500/30 transition text-xs"
+            >
+              🗑️ Delete
+            </button>
+          )}
+
+        <button
+          onClick={() => handleUpvote(post.id)}
+          className="bg-white/10 px-4 py-2 rounded-full hover:bg-white/20 transition text-sm"
+        >
+          👍 {post.upvotes}
+        </button>
+      </div>
+    </div>
+  </div>
+))}
 
       </div>
     </div>

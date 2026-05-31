@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
 import PostCreate from './pages/PostCreate';
+import Login from './pages/Login';
 
 function App() {
   return (
@@ -9,8 +10,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/feed" element={<Feed />} />
-        {/* PostCreate page */}
         <Route path="/post" element={<PostCreate />} />
+        <Route path="/login" element={<Login />} />
       </Routes>
     </BrowserRouter>
   );
