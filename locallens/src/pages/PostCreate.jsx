@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPost } from '../services/postService';
 
+
 function PostCreate() {
   const navigate = useNavigate();
+  const [voiceLang, setVoiceLang] = useState('en-IN');
+  const [isListening, setIsListening] = useState(false);
 
   const now = new Date();
   const timePosted = now.toLocaleTimeString('en-IN', {
@@ -95,7 +98,57 @@ function PostCreate() {
       setLocationSuggestions([]);
     }
   };
+// VOICE POST - converts speech to text!
+// Uses browser's built-in Web Speech API
+// Completely free, no API needed!
+const handleVoice = () => {
 
+  // Check if browser supports speech recognition
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert('Voice not supported in this browser! Use Chrome.');
+    return;
+  }
+
+  if (isListening) {
+    // Stop listening
+    setIsListening(false);
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+
+ 
+// Use browser's language or English by default
+  // Use whatever language user selected!
+recognition.lang = voiceLang;
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    setIsListening(true);
+  };
+
+  recognition.onresult = (event) => {
+    // Get the spoken text
+    const spokenText = event.results[0][0].transcript;
+    // Put it in the content box!
+    setContent(spokenText);
+    setIsListening(false);
+  };
+
+  recognition.onerror = () => {
+    setIsListening(false);
+    alert('Could not hear clearly! Try again.');
+  };
+
+  recognition.onend = () => {
+    setIsListening(false);
+  };
+
+  recognition.start();
+};
   // SUBMIT - saves to REAL backend database!
   const handleSubmit = async () => {
     if (!area || !content || !category) {
@@ -274,12 +327,60 @@ function PostCreate() {
               <label className="text-sm text-gray-400 font-semibold mb-2 block">
                 📢 What's Happening?
               </label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Describe the situation or click a suggestion →"
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition h-32 resize-none"
-              />
+              {/* VOICE LANGUAGE SELECTOR */}
+<div className="flex gap-2 mb-2 flex-wrap">
+  {[
+    { code: 'en-IN', label: '🇮🇳 English' },
+    { code: 'te-IN', label: 'తెలుగు' },
+    { code: 'hi-IN', label: 'हिंदी' },
+    { code: 'ta-IN', label: 'தமிழ்' },
+    { code: 'kn-IN', label: 'ಕನ್ನಡ' },
+    { code: 'ml-IN', label: 'മലയാളം' },
+    { code: 'mr-IN', label: 'मराठी' },
+    { code: 'bn-IN', label: 'বাংলা' },
+    { code: 'gu-IN', label: 'ગુજરાતી' },
+    { code: 'pa-IN', label: 'ਪੰਜਾਬੀ' },
+  ].map(lang => (
+    <button
+      key={lang.code}
+      onClick={() => setVoiceLang(lang.code)}
+      className={`px-3 py-1 rounded-full text-xs transition
+        ${voiceLang === lang.code
+          ? 'bg-cyan-500 text-white'
+          : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10'
+        }`}
+    >
+      {lang.label}
+    </button>
+  ))}
+</div>
+              <div className="relative">
+  <textarea
+    value={content}
+    onChange={(e) => setContent(e.target.value)}
+    placeholder="Describe the situation, click suggestion, or use voice 🎙️"
+    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 transition h-32 resize-none pr-16"
+  />
+
+  {/* VOICE BUTTON inside textarea */}
+  <button
+    onClick={handleVoice}
+    className={`absolute bottom-3 right-3 p-3 rounded-full transition ${
+      isListening
+        ? 'bg-red-500 animate-pulse text-white'
+        : 'bg-white/10 text-gray-400 hover:bg-cyan-500/20 hover:text-cyan-400'
+    }`}
+  >
+    {isListening ? '⏹️' : '🎙️'}
+  </button>
+</div>
+
+{/* Voice status message */}
+{isListening && (
+  <p className="text-red-400 text-xs mt-1 animate-pulse">
+    🔴 Listening... speak now in any language!
+  </p>
+)}
               <p className="text-gray-500 text-xs mt-1 text-right">
                 {content.length}/300
               </p>
