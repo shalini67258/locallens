@@ -470,7 +470,7 @@ const getCommunityTrust = (post) => {
             </p>
             {post.imageUrl && (
   <img
-    src={`http://localhost:8080${post.imageUrl}`}
+    src={`https://locallens-backend-6p3m.onrender.com${post.imageUrl}`}
     alt="Post evidence"
     className="mt-3 rounded-2xl w-full max-h-64 object-cover border border-white/10"
   />

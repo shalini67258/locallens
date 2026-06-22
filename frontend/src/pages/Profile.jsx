@@ -29,7 +29,7 @@ const [photoPreview, setPhotoPreview] = useState(localStorage.getItem('locallens
       setMyPosts(allPosts.filter(p => p.postedBy === currentUser.email));
 
       const token = localStorage.getItem('locallens_token');
-      const res = await fetch('http://localhost:8080/api/posts/trust-score', {
+      const res = await fetch('https://locallens-backend-6p3m.onrender.com/api/posts/trust-score', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();

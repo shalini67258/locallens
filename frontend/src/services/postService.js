@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8080/api';
+const BASE_URL = 'https://locallens-backend-6p3m.onrender.com/api';
 
 export const getAllPosts = async () => {
   const response = await fetch(`${BASE_URL}/posts`);

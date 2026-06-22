@@ -28,7 +28,7 @@ function Home() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/posts/stats');
+      const res = await fetch('https://locallens-backend-6p3m.onrender.com/api/posts/stats');
       const data = await res.json();
       setStats(data);
     } catch (error) {
@@ -39,7 +39,7 @@ function Home() {
   const fetchNotifications = async () => {
     try {
       const city = getUser()?.city;
-      const res = await fetch(`http://localhost:8080/api/posts/notifications?city=${encodeURIComponent(city)}`);
+      const res = await fetch(`https://locallens-backend-6p3m.onrender.com/api/posts/notifications?city=${encodeURIComponent(city)}`);
       const data = await res.json();
       setNotifCount(data.count);
     } catch (error) {
@@ -56,7 +56,7 @@ function Home() {
     setShowTrustScore(true);
     try {
       const token = localStorage.getItem('locallens_token');
-      const res = await fetch('http://localhost:8080/api/posts/trust-score', {
+      const res = await fetch('https://locallens-backend-6p3m.onrender.com/api/posts/trust-score', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -71,7 +71,7 @@ function Home() {
   const fetchAiSummary = async () => {
     try {
       setLoadingSummary(true);
-      const res = await fetch('http://localhost:8080/api/posts/summary');
+      const res = await fetch('https://locallens-backend-6p3m.onrender.com/api/posts/summary');
       const data = await res.json();
       setAiSummary(data.summary);
     } catch (error) {

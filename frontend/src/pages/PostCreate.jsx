@@ -225,7 +225,7 @@ function PostCreate() {
       if (selectedImage && newPost.id) {
         const formData = new FormData();
         formData.append('file', selectedImage);
-        await fetch(`http://localhost:8080/api/posts/${newPost.id}/image`, {
+        await fetch(`https://locallens-backend-6p3m.onrender.com/api/posts/${newPost.id}/image`, {
           method: 'POST',
           body: formData
         });
