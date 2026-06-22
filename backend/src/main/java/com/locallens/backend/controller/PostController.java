@@ -32,7 +32,7 @@ import com.locallens.backend.service.PostService;
 
 @RestController
 @RequestMapping("/api/posts")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "https://locallens-nccs.onrender.com"})
 public class PostController {
 
     @Autowired
