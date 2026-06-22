@@ -24,3 +24,6 @@ target/
 .project
 .settings/
 .mvn/
+# Backend junk to ignore
+/backend/target/
+/backend/src/main/resources/application.properties
